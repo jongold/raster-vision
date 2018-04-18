@@ -69,22 +69,21 @@ def create_tf_example(image, labels, class_map, chip_id=''):
 
 
 def write_tf_record(tf_examples, output_path):
-    writer = tf.python_io.TFRecordWriter(output_path)
-    for tf_example in tf_examples:
-        writer.write(tf_example.SerializeToString())
-    writer.close()
+    with tf.python_io.TFRecordWriter(output_path) as writer:
+        for tf_example in tf_examples:
+            writer.write(tf_example.SerializeToString())
 
 
 def merge_tf_records(output_path, src_records):
 
-    writer = tf.python_io.TFRecordWriter(output_path)
-    print('Merging TFRecords', end='', flush=True)
-    for src_record in src_records:
-        for string_record in tf.python_io.tf_record_iterator(src_record):
-            writer.write(string_record)
-        print('.', end='', flush=True)
-    print()
-    writer.close()
+    with tf.python_io.TFRecordWriter(output_path) as writer:
+        print('Merging TFRecords', end='', flush=True)
+        for src_record in src_records:
+            for string_record in tf.python_io.tf_record_iterator(src_record):
+                writer.write(string_record)
+            print('.', end='', flush=True)
+        print()
+
 
 def make_tf_class_map(class_map):
     tf_class_map = StringIntLabelMap()
