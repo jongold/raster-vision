@@ -2,8 +2,11 @@ from abc import ABC, abstractmethod
 
 from rastervision.core.training_data import TrainingData
 
+# TODO: DRY... same keys as in ml_backends/tf_object_detection_aip.py
+TRAIN = 'train'
+VALIDATION = 'validation'
 
-class MLTask():
+class MLTask(object):
     """Functionality for a specific machine learning task.
 
     This should be subclassed to add a new task, such as object detection
@@ -92,26 +95,34 @@ class MLTask():
                 (that is disjoint from train_projects)
             options: ProcessTrainingDataConfig.Options
         """
-        def _process_training_data(projects):
-            training_data = TrainingData()
+        def _process_projects(projects, type_):
+            processed_projects = []
             for project in projects:
-                print('Making training chips for project', end='', flush=True)
+                data = TrainingData()
+                print('Making {} chips for project: {}'.format(
+                    type_, project.id), end='', flush=True)
                 windows = self.get_train_windows(project, options)
                 for window in windows:
                     chip = project.raster_source.get_chip(window)
                     labels = self.get_train_labels(
                         window, project, options)
-                    training_data.append(chip, labels)
+                    data.append(chip, labels)
                     print('.', end='', flush=True)
                 print()
+                processed_project = self.backend.per_project_data_processor(
+                    project, data, self.class_map, options)
+                processed_projects.append(processed_project)
                 # TODO load and delete project data as needed to avoid
                 # running out of disk space
-            return training_data
+            return processed_projects
 
-        training_data = _process_training_data(train_projects)
-        validation_data = _process_training_data(validation_projects)
-        self.backend.convert_training_data(
-            training_data, validation_data, self.class_map, options)
+        # TODO: parallel processing!
+        processed_training_projects = _process_projects(train_projects, TRAIN)
+        processed_validation_projects = _process_projects(
+            validation_projects, VALIDATION)
+        self.backend.all_projects_dataset_processor(
+            processed_training_projects, processed_validation_projects,
+            self.class_map, options)
 
     def train(self, options):
         """Train a model.

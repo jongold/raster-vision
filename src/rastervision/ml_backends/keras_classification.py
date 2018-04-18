@@ -109,8 +109,11 @@ class KerasClassification(MLBackend):
     def __init__(self):
         self.model = None
 
-    def convert_training_data(self, training_data, validation_data, class_map,
-                              options):
+    def per_project_data_processor(self, project, data, class_map, options):
+        return data
+
+    def all_projects_dataset_processor(self, training_data, validation_data,
+                                       class_map, options):
         """Convert training data to ImageFolder format.
 
         For each dataset, there is a directory for each class_name with chips
@@ -122,20 +125,23 @@ class KerasClassification(MLBackend):
         validation_dir = dataset_files.get_local_path(
             dataset_files.validation_uri)
 
-        def convert_dataset(dataset, output_dir):
+        def convert_dataset(datasets, output_dir):
             for class_name in class_map.get_class_names():
                 class_dir = join(output_dir, class_name)
                 make_dir(class_dir)
 
-            for chip_ind, (chip, labels) in enumerate(dataset):
-                class_id = labels.get_class_id()
-                # If a chip is not associated with a class, don't
-                # use it in training data.
-                if class_id is not None:
-                    class_name = class_map.get_by_id(class_id).name
-                    chip_path = join(
-                        output_dir, class_name, str(chip_ind) + '.png')
-                    save_img(chip, chip_path)
+            chip_ind = 0
+            for dataset in datasets:
+                for chip, labels in dataset:
+                    class_id = labels.get_class_id()
+                    # If a chip is not associated with a class, don't
+                    # use it in training data.
+                    if class_id is not None:
+                        class_name = class_map.get_by_id(class_id).name
+                        chip_path = join(
+                            output_dir, class_name, str(chip_ind) + '.png')
+                        save_img(chip, chip_path)
+                    chip_ind += 1
 
         convert_dataset(training_data, training_dir)
         convert_dataset(validation_data, validation_dir)

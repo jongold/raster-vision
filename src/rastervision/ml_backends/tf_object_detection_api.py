@@ -75,6 +75,17 @@ def write_tf_record(tf_examples, output_path):
     writer.close()
 
 
+def merge_tf_records(output_path, src_records):
+
+    writer = tf.python_io.TFRecordWriter(output_path)
+    print('Merging TFRecords', end='', flush=True)
+    for src_record in src_records:
+        for string_record in tf.python_io.tf_record_iterator(src_record):
+            writer.write(string_record)
+        print('.', end='', flush=True)
+    print()
+    writer.close()
+
 def make_tf_class_map(class_map):
     tf_class_map = StringIntLabelMap()
     tf_items = []
@@ -327,16 +338,28 @@ class TFObjectDetectionAPI(MLBackend):
     def __init__(self):
         self.detection_graph = None
 
-    def convert_training_data(self, training_data, validation_data, class_map,
-                              options):
+    def per_project_data_processor(self, project, data, class_map, options):
+
+        training_package = TrainingPackage(options.output_uri)
+        tf_examples = make_tf_examples(data, class_map)
+        record_path = training_package.get_local_path(
+            training_package.get_record_uri(project.id))
+        write_tf_record(tf_examples, record_path)
+
+        return record_path
+
+    def all_projects_dataset_processor(self, training_data, validation_data,
+                                       class_map, options):
         training_package = TrainingPackage(options.output_uri)
 
-        def _convert_training_data(data, split):
-            # Save TFRecord.
-            tf_examples = make_tf_examples(data, class_map)
+        def _merge_training_data(data, split):
+
+            # "split" tf record
             record_path = training_package.get_local_path(
                 training_package.get_record_uri(split))
-            write_tf_record(tf_examples, record_path)
+
+            # merge each project's tfrecord into "split" tf record
+            merge_tf_records(record_path, data)
 
             # Save debug chips.
             if options.debug:
@@ -347,8 +370,8 @@ class TFObjectDetectionAPI(MLBackend):
                     shutil.make_archive(
                         os.path.splitext(debug_zip_path)[0], 'zip', debug_dir)
 
-        _convert_training_data(training_data, TRAIN)
-        _convert_training_data(validation_data, VALIDATION)
+        _merge_training_data(training_data, TRAIN)
+        _merge_training_data(validation_data, VALIDATION)
 
         # Save TF label map based on class_map.
         class_map_path = training_package.get_local_path(

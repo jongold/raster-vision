@@ -9,9 +9,21 @@ class MLBackend(ABC):
     """
 
     @abstractmethod
-    def convert_training_data(self, training_data, validation_data, class_map,
-                              options):
-        """Convert training data to backend-specific format and save it.
+    def per_project_data_processor(self, project, data, class_map, options):
+        """Process each project's training data
+
+        Args:
+            project: Project
+            data: TrainingData
+            class_map: ClassMap
+            options: ProcessTrainingDataConfig.Options
+        """
+        pass
+
+    @abstractmethod
+    def all_projects_dataset_processor(self, training_data, validation_data,
+                                       class_map, options):
+        """After all projects have been processed, process the resultset
 
         Args:
             training_data: TrainingData
