@@ -95,26 +95,29 @@ class MLTask(object):
                 (that is disjoint from train_projects)
             options: ProcessTrainingDataConfig.Options
         """
+
+        def _process_project(project, type_):
+            data = TrainingData()
+            print('Making {} chips for project: {}'.format(
+                type_, project.id), end='', flush=True)
+            windows = self.get_train_windows(project, options)
+            for window in windows:
+                chip = project.raster_source.get_chip(window)
+                labels = self.get_train_labels(
+                    window, project, options)
+                data.append(chip, labels)
+                print('.', end='', flush=True)
+            print()
+            # TODO load and delete project data as needed to avoid
+            # running out of disk space
+            return self.backend.per_project_data_processor(
+                project, data, self.class_map, options)
+
         def _process_projects(projects, type_):
-            processed_projects = []
-            for project in projects:
-                data = TrainingData()
-                print('Making {} chips for project: {}'.format(
-                    type_, project.id), end='', flush=True)
-                windows = self.get_train_windows(project, options)
-                for window in windows:
-                    chip = project.raster_source.get_chip(window)
-                    labels = self.get_train_labels(
-                        window, project, options)
-                    data.append(chip, labels)
-                    print('.', end='', flush=True)
-                print()
-                processed_project = self.backend.per_project_data_processor(
-                    project, data, self.class_map, options)
-                processed_projects.append(processed_project)
-                # TODO load and delete project data as needed to avoid
-                # running out of disk space
-            return processed_projects
+            return [
+                _process_project(project, type_)
+                for project in projects
+            ]
 
         # TODO: parallel processing!
         processed_training_projects = _process_projects(train_projects, TRAIN)
