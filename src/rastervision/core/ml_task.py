@@ -110,7 +110,7 @@ class MLTask(object):
             print()
             # TODO load and delete project data as needed to avoid
             # running out of disk space
-            return self.backend.per_project_data_processor(
+            return self.backend.process_project_data(
                 project, data, self.class_map, options)
 
         def _process_projects(projects, type_):
@@ -120,11 +120,11 @@ class MLTask(object):
             ]
 
         # TODO: parallel processing!
-        processed_training_projects = _process_projects(train_projects, TRAIN)
-        processed_validation_projects = _process_projects(
+        processed_training_results = _process_projects(train_projects, TRAIN)
+        processed_validation_results = _process_projects(
             validation_projects, VALIDATION)
-        self.backend.all_projects_dataset_processor(
-            processed_training_projects, processed_validation_projects,
+        self.backend.process_projectset_results(
+            processed_training_results, processed_validation_results,
             self.class_map, options)
 
     def train(self, options):

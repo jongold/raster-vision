@@ -9,7 +9,7 @@ class MLBackend(ABC):
     """
 
     @abstractmethod
-    def per_project_data_processor(self, project, data, class_map, options):
+    def process_project_data(self, project, data, class_map, options):
         """Process each project's training data
 
         Args:
@@ -17,17 +17,21 @@ class MLBackend(ABC):
             data: TrainingData
             class_map: ClassMap
             options: ProcessTrainingDataConfig.Options
+
+        Returns:
+            backend-specific data-structures consumed by ml_backend's
+            process_projectset_results
         """
         pass
 
     @abstractmethod
-    def all_projects_dataset_processor(self, training_data, validation_data,
+    def process_projectset_results(self, training_results, validation_results,
                                        class_map, options):
         """After all projects have been processed, process the resultset
 
         Args:
-            training_data: TrainingData
-            validation_data: TrainingData
+            training_results: dependent on the ml_backend's process_project_data
+            validation_results: dependent on the ml_backend's process_project_data
             class_map: ClassMap
             options: ProcessTrainingDataConfig.Options
         """

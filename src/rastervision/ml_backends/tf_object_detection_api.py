@@ -354,7 +354,18 @@ class TFObjectDetectionAPI(MLBackend):
     def __init__(self):
         self.detection_graph = None
 
-    def per_project_data_processor(self, project, data, class_map, options):
+    def process_project_data(self, project, data, class_map, options):
+        """Process each project's training data
+
+        Args:
+            project: Project
+            data: TrainingData
+            class_map: ClassMap
+            options: ProcessTrainingDataConfig.Options
+
+        Returns:
+            the local path to the project's TFRecord
+        """
 
         training_package = TrainingPackage(options.output_uri)
         tf_examples = make_tf_examples(data, class_map)
@@ -364,18 +375,27 @@ class TFObjectDetectionAPI(MLBackend):
 
         return record_path
 
-    def all_projects_dataset_processor(self, training_data, validation_data,
-                                       class_map, options):
+    def process_projectset_data(self, training_results, validation_results,
+                                class_map, options):
+        """After all projects have been processed, merge all TFRecords
+
+        Args:
+            training_results: list of training projects' TFRecords
+            validation_results: list of validation projects' TFRecords
+            class_map: ClassMap
+            options: ProcessTrainingDataConfig.Options
+        """
+
         training_package = TrainingPackage(options.output_uri)
 
-        def _merge_training_data(data, split):
+        def _merge_training_results(results, split):
 
             # "split" tf record
             record_path = training_package.get_local_path(
                 training_package.get_record_uri(split))
 
             # merge each project's tfrecord into "split" tf record
-            merge_tf_records(record_path, data)
+            merge_tf_records(record_path, results)
 
             # Save debug chips.
             if options.debug:
@@ -386,8 +406,8 @@ class TFObjectDetectionAPI(MLBackend):
                     shutil.make_archive(
                         os.path.splitext(debug_zip_path)[0], 'zip', debug_dir)
 
-        _merge_training_data(training_data, TRAIN)
-        _merge_training_data(validation_data, VALIDATION)
+        _merge_training_results(training_results, TRAIN)
+        _merge_training_results(validation_results, VALIDATION)
 
         # Save TF label map based on class_map.
         class_map_path = training_package.get_local_path(
