@@ -98,12 +98,16 @@ class ChainWorkflow(object):
         self.update_projects()
 
     def update_projects(self):
-        for project in self.workflow.train_projects:
+        for idx, project in enumerate(self.workflow.train_projects):
+            if len(project.id) < 1:
+                project.id = 'train-{}'.format(idx)
             # Set raster_tranformer for raster_sources
             project.raster_source.raster_transformer.MergeFrom(
                 self.workflow.raster_transformer)
 
-        for project in self.workflow.test_projects:
+        for idx, project in enumerate(self.workflow.test_projects):
+            if len(project.id) < 1:
+                project.id = 'eval-{}'.format(idx)
             project.raster_source.raster_transformer.MergeFrom(
                 self.workflow.raster_transformer)
 
@@ -270,6 +274,10 @@ class ChainWorkflow(object):
 def main(workflow_uri, tasks, remote, simulated_remote, branch, run):
     if len(tasks) == 0:
         tasks = ALL_TASKS
+
+    for task in tasks:
+        if not task in ALL_TASKS:
+            raise Exception("Task '{}' is not a valid task.".format(task))
 
     workflow = ChainWorkflow(workflow_uri, remote=(remote or simulated_remote))
     workflow.save_configs(tasks)
