@@ -75,7 +75,6 @@ def write_tf_record(tf_examples, output_path):
 
 
 def merge_tf_records(output_path, src_records):
-
     with tf.python_io.TFRecordWriter(output_path) as writer:
         print('Merging TFRecords', end='', flush=True)
         for src_record in src_records:
@@ -353,6 +352,8 @@ def compute_prediction(image_np, detection_graph, session):
 class TFObjectDetectionAPI(MLBackend):
     def __init__(self):
         self.detection_graph = None
+        # persist project training packages for when output_uri is remote
+        self.project_training_packages = []
 
     def process_project_data(self, project, data, class_map, options):
         """Process each project's training data
@@ -368,6 +369,7 @@ class TFObjectDetectionAPI(MLBackend):
         """
 
         training_package = TrainingPackage(options.output_uri)
+        self.project_training_packages.append(training_package)
         tf_examples = make_tf_examples(data, class_map)
         record_path = training_package.get_local_path(
             training_package.get_record_uri(project.id))
@@ -416,6 +418,9 @@ class TFObjectDetectionAPI(MLBackend):
         save_tf_class_map(tf_class_map, class_map_path)
 
         training_package.upload(debug=options.debug)
+
+        # clear project training packages
+        del self.project_training_packages[:]
 
     def train(self, class_map, options):
         # Download training data and update config file.
