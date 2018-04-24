@@ -148,8 +148,8 @@ class KerasClassification(MLBackend):
 
     def process_projectset_results(self, training_results, validation_results,
                                 class_map, options):
-        """After all projects have been processed, merge the images of each
-        class across projects
+        """After all projects have been processed, collect all the images of
+        each class across all projects
 
         Args:
             training_results: list of dictionaries of training projects'
