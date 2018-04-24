@@ -146,7 +146,7 @@ class KerasClassification(MLBackend):
 
         return class_dirs
 
-    def process_projectset_data(self, training_results, validation_results,
+    def process_projectset_results(self, training_results, validation_results,
                                 class_map, options):
         """After all projects have been processed, merge the images of each
         class across projects
