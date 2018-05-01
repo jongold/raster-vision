@@ -134,7 +134,8 @@ class KerasClassification(MLBackend):
             dataset_files.scratch_uri)
         # Ensure directory is unique since project id's could be shared between
         # training and test sets.
-        project_dir = join(scratch_dir, '{}-{}'.format(project.id, uuid.uuid4()))
+        project_dir = join(scratch_dir, '{}-{}'.format(
+            project.id, uuid.uuid4()))
         class_dirs = {}
 
         for chip_idx, (chip, labels) in enumerate(data):
