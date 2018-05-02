@@ -85,8 +85,8 @@ class Trainer(object):
         else:
             generator = ImageDataGenerator(
                 rescale=1./255,
-                horizontal_flip=True,
-                vertical_flip=True)
+                horizontal_flip=False,
+                vertical_flip=False)
 
         generator = generator.flow_from_directory(
             image_folder_dir,
@@ -115,6 +115,18 @@ class Trainer(object):
 
         self.model.compile(self.optimizer, loss_function, metrics=metrics)
 
+        for i in range(self.options.nb_epochs):
+            print(i)
+            for x, y in self.validation_gen:
+                break
+
+            self.model.train_on_batch(x, y)
+            preds = self.model.predict(x)
+            print(y)
+            print(preds)
+            print()
+
+        '''
         self.model.fit_generator(
             self.training_gen,
             initial_epoch=initial_epoch,
@@ -123,3 +135,4 @@ class Trainer(object):
             validation_data=self.validation_gen,
             validation_steps=validation_steps,
             callbacks=callbacks)
+        '''
