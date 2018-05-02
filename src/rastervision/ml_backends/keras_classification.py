@@ -85,6 +85,8 @@ class ModelFiles(FileGroup):
 
     def download_backend_config(self, backend_config_uri,
                                 dataset_files, class_map):
+        backend_config_path = download_if_needed(
+            backend_config_uri, self.temp_dir)
         config = load_json_config(backend_config_uri, PipelineConfig())
 
         # Update config using local paths.
@@ -102,11 +104,10 @@ class ModelFiles(FileGroup):
             class_map.get_class_names())
 
         # Save an updated copy of the config file.
-        config_path = self.get_local_path(backend_config_uri)
         config_str = json_format.MessageToJson(config)
-        with open(config_path, 'w') as config_file:
+        with open(backend_config_path, 'w') as config_file:
             config_file.write(config_str)
-        return config_path
+        return backend_config_path
 
 
 class KerasClassification(MLBackend):

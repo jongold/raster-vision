@@ -82,14 +82,19 @@ class Trainer(object):
         # This will make the validation scores more comparable between epochs.
         if validation_mode:
             generator = ImageDataGenerator(rescale=1./255)
+            save_to_dir = '/opt/data/lf-dev/debug-val-data/'
+            make_dir(save_to_dir)
         else:
             generator = ImageDataGenerator(
                 rescale=1./255,
                 horizontal_flip=True,
                 vertical_flip=True)
+            save_to_dir = '/opt/data/lf-dev/debug-train-data/'
+            make_dir(save_to_dir)
 
         generator = generator.flow_from_directory(
             image_folder_dir,
+            save_to_dir=save_to_dir,
             classes=self.options.class_names,
             target_size=(self.options.input_size, self.options.input_size),
             batch_size=self.options.batch_size,
